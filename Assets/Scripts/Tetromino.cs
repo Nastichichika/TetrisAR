@@ -3,7 +3,7 @@ public class Tetromino : MonoBehaviour
 {
 
     float prevTime;
-    float fallTime = 1.4f;
+    float fallTime = 1f;
 
     private Vector3 Down = new Vector3(0, -0.1f, 0);
     private Vector3 Up = new Vector3(0, 0.1f, 0);
@@ -11,37 +11,32 @@ public class Tetromino : MonoBehaviour
     void Start()
     {
         RotateMoveHandler.instance.SetActiveBlock(gameObject, this);
+        
         fallTime = GameManager.instance.ReadFallSpeed();
-        if (!CheckValidMove())
-        {
+        if (!CheckValidMove()) {
+            Debug.Log("SetGameIsOver");
         //    ARManager.instance.txt.text = "game over";
             GameManager.instance.SetGameIsOver();
         }
     }
     void Update()
     {
-        if(Time.time - prevTime > fallTime)
-        {
+        if(Time.time - prevTime > fallTime) {
             transform.position += Down;
 
-            
-            if (!CheckValidMove())
-            {
+            if (!CheckValidMove()) {
                 transform.position += Up;
-                //DELETE LAYER IF POSSIBLE
+
                 Playfield.instance.DeleteLayer();
                 enabled = false;
-                //CREATE A NEW TETRIS BLOCK
 
                 if (!GameManager.instance.ReadGameIsOver()) {
+                    GameManager.instance.setScore(36);
                     Playfield.instance.SpawnNewBlock();
-
                 }
             }
-            else
-            {
-                //UPDATE THE GRID
-                Playfield.instance.UpdateGrid(this);
+            else {
+                Playfield.instance.UpdateContainer(this);
             }
             prevTime = Time.time;
         }
@@ -54,7 +49,7 @@ public class Tetromino : MonoBehaviour
             transform.position -= direction;
         }
         else {
-            Playfield.instance.UpdateGrid(this);
+            Playfield.instance.UpdateContainer(this);
         }
     }
 
@@ -67,37 +62,38 @@ public class Tetromino : MonoBehaviour
         }
         else
         {
-            Playfield.instance.UpdateGrid(this);
+            Playfield.instance.UpdateContainer(this);
         }
     }
 
     bool CheckValidMove()
     {
-        foreach(Transform child in transform)
-        {
+        foreach(Transform child in transform){
             //ARManager.instance.txt.text += "transform" + transform;
             Vector3 pos = child.position;
-            if(!Playfield.instance.CheckInsideGrid(pos)) {
-                Debug.Log("outside" + child.position.ToString());
-                ARManager.instance.txt.text += "outside" + pos;
+
+            if(!Playfield.instance.CheckInsideContainer(pos)) {
+                // Debug.Log("outside NOT VALID" + child.position.ToString() + transform.name);
+                // ARManager.instance.txt.text += "outside" + pos;
+                // // Debug.Log(NPOTSupport)
                 return false;
             }
         }
 
-        foreach(Transform child in transform)
-        {
+        foreach(Transform child in transform) {
             Vector3 pos = child.position;
-            Transform t = Playfield.instance.GetTransformOnGridPos(pos);
-            if (t != null && t.parent != transform)
-            {
-                ARManager.instance.txt.text = "falde" + " ";
+            Transform t = Playfield.instance.GetTransformOnContainerPos(pos);
+            if (t != null && t.parent != transform) {
+                // Debug.Log("here someone NOT VALID" + child.position.ToString() + t.name + transform.name);
+                // ARManager.instance.txt.text += "falde" + " " + pos;
                 return false;
             }
         }
+        // Debug.Log("VALID" + transform.position + "   " + transform.name);
         return true;
     }
 
-    public void SetSpeed()
+    public void SetSpeed() 
     {
         fallTime = 0.1f;
     }

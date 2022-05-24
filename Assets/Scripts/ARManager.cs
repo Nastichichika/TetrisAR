@@ -23,6 +23,8 @@ public class ARManager : MonoBehaviour
     void Awake()
     {
         instance = this;
+        Input.compass.enabled = true;
+        Input.location.Start();
     }
 
     void Start()
@@ -34,27 +36,34 @@ public class ARManager : MonoBehaviour
     void Update()
     {
         if (!gameStart) {
-            
-            if (Input.touchCount == 0) 
-                return;
             ShowMarkerAndSetObject();
         }
     }
     void ShowMarkerAndSetObject() {
         List<ARRaycastHit> hits = new List<ARRaycastHit>();
-        txt.text = "start hits";
         ARRaycastManagerScript.Raycast(new Vector2(Screen.width /2, Screen.height/2), hits, TrackableType.Planes);
+
         if (hits.Count > 0) {
-            txt.text = hits.Count + "qwer";
+            // txt.text = hits.Count + "qwer";
             PlaneMarkerPrefab.transform.position = hits[0].pose.position;
             PlaneMarkerPrefab.SetActive(true);
         }
-        txt.text += " -> hits plane";
-        //if (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began) {
-            Instantiate(ObjectToSpawn, hits[0].pose.position, ObjectToSpawn.transform.rotation);
-            Debug.Log(Input.touches[0].position.ToString());
+        if (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Began) {
+            // txt.text += " magneticHeading   " + Input.compass.magneticHeading;
+            
+            var instance = Instantiate(ObjectToSpawn, hits[0].pose.position, Quaternion.identity);
+            // Debug.Log("Input.compass.trueHeading" + " " + Input.compass.magneticHeading);
+            // Debug.Log(Input.compass.trueHeading);
+            RotateMoveHandler.instance.compass = Input.compass.trueHeading;
+            // Add an ARAnchor component if it doesn't have one already.
+            if (instance.GetComponent<ARAnchor>() == null)
+            {
+                instance.AddComponent<ARAnchor>();
+            }
+
+            // Debug.Log(Input.touches[0].position.ToString());
             gameStart = true;
-            txt.text = Input.touches[0].position + " ";
-        //}
+            // txt.text = Input.touches[0].position + " ";
+        }
     }
 }

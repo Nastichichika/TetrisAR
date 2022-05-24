@@ -1,44 +1,41 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
 public class Playfield : MonoBehaviour
 {
     public static Playfield instance;
 
     [Header("Field sizes")]
-    [SerializeField]private int gridSizeX;
-    [SerializeField]private int gridSizeY;
-    [SerializeField]private int gridSizeZ;
+    [SerializeField]private int ContainerSizeX;
+    [SerializeField]private int ContainerSizeY;
+    [SerializeField]private int ContainerSizeZ;
 
     [Header("Tetrominoes")]
-    public GameObject[] blockList;
-    public GameObject[] ghostList;
-    public Vector3 spawnPoint;
+    [SerializeField]private GameObject[] blockList;
+    [SerializeField]private GameObject[] ghostList;
+    private Vector3 spawnPoint;
 
     [Header("Playfield visualisation")]
-    public GameObject bottomPlane;
-    public GameObject North, South, West, East;
+    [SerializeField]private GameObject bottomPlane;
+    [SerializeField]private GameObject North, South, West, East;
 
     private int randomTetrominoes;
-    public Transform[,,] TheGrid;
+    public Transform[,,] Container;
 
     private Vector3 first_cell;
-    private float size_cell = 0.1f;
+    public float size_cell = 0.1f;
 
-    void Awake()
+    void Awake() 
     {
         instance = this; 
     }
-
-    private float CreateFirstCoordinate(float center, int diff) {
-        return (center - diff * size_cell + size_cell/2);
-    }
     private void Start()
     {
-        TheGrid = new Transform[gridSizeX, gridSizeY, gridSizeZ];
-        Debug.Log(transform.position.ToString());
-        first_cell = new Vector3( CreateFirstCoordinate(transform.position.x, 3), 
-                                CreateFirstCoordinate(transform.position.y, 5),
-                                CreateFirstCoordinate(transform.position.z, 3));
+        Container = new Transform[ContainerSizeX, ContainerSizeY, ContainerSizeZ];
+        // // Debug.Log(transform.position.ToString());
+        
+        // // Debug.Log("first_cellv" + first_cell);
         if (ARManager.instance.gameStart) {
             NextTetromino();// next element random
             SpawnNewBlock();
@@ -54,31 +51,21 @@ public class Playfield : MonoBehaviour
 
     public void SpawnNewBlock()
     {
-        // Vector3 spawnPoint = new Vector3(((int)(transform.position.x + (float)gridSizeX/ 2))/100,
-        //                                  ((int)transform.position.y + gridSizeY) /100,
-        //                                  ((int)(transform.position.z * 100+ (float)gridSizeZ * 100/ 2)))/100;
-        // Vector3 spawnPoint = new Vector3((int)(transform.position.x + (float)gridSizeX / 2),
-        //                                  (int)transform.position.y + gridSizeY,
-        //                                  (int)(transform.position.z + (float)gridSizeZ / 2));
-        Vector3 spawnPoint = new Vector3(transform.position.x + 0.05f, 
-                                        transform.position.y + (float)gridSizeY/10 / 2 + 0.05f, 
-                                        transform.position.z + 0.05f);
-        ARManager.instance.txt.text = "SpawnNewBlock";
-        Debug.Log(spawnPoint);
-        // //ARManager.instance.txt.text = "wet";
-        // ARManager.instance.txt.text += "point" + (int)(transform.position.x * 100 + (float)gridSizeX * 100/ 2) + " " + ((int)transform.position.y * 100+ gridSizeY* 100) + " " + (transform.position.z * 100+ (float)gridSizeZ * 100/ 2);
-        // ARManager.instance.txt.text += "point" + transform.position.x + " " + transform.position.y + " " + transform.position.z + spawnPoint;
-        // ARManager.instance.txt.text += "point" + x_start + " " + y_start + " " + z_start;
-        // spawnPoint = new Vector3(x_start + 0.025f,
-        //                                  y_start + 0.8f,
-        //                                  z_start + 0.025f);
-        // Spawn The Block
+        // Vector3 spawnPoint = new Vector3(transform.position.x + size_cell/2 + swawnHelper[randomTetrominoes].x, 
+        //                                 transform.position.y + (float)ContainerSizeY/10 / 2 + size_cell/2 + swawnHelper[randomTetrominoes].y, 
+        //                                 transform.position.z + size_cell/2 + swawnHelper[randomTetrominoes].z);
+        Vector3 spawnPoint = new Vector3(transform.position.x + size_cell/2 , 
+                                        transform.position.y + (float)ContainerSizeY/10/2 - size_cell/2, 
+                                        transform.position.z + size_cell/2);
+        // ARManager.instance.txt.text += "SpawnNewBlock";
+        // // Debug.Log(spawnPoint);
+        Debug.Log("start new block");
         GameObject newBlock = Instantiate(blockList[randomTetrominoes], spawnPoint, Quaternion.identity) as GameObject;
-        // ARManager.instance.txt.text += "spawnPoint" + ((int)(transform.position.x * 100 + (float)gridSizeX * 100/ 2))/100 + " " +
-        // ((int)transform.position.y * 100+ gridSizeY* 100) /100  + " " + ((int)(transform.position.z * 100+ (float)gridSizeZ * 100/ 2))/100 ;
         // TODO create class Ghost and set the ghost
-        // GameObject newGhost = Instantiate(ghostList[randomTetrominoes], spawnPoint, Quaternion.identity) as GameObject;
-        // newGhost.GetComponent<Ghost>().setParent(newBlock);
+        GameObject newGhost = Instantiate(ghostList[randomTetrominoes], spawnPoint, Quaternion.identity) as GameObject;
+        Debug.Log("randomTetrominoes " + randomTetrominoes);
+        // // Debug.Log("newBlock" + newBlock.name);
+        newGhost.GetComponent<Ghost>().setParent(newBlock);
 
         NextTetromino();
     }
@@ -86,9 +73,9 @@ public class Playfield : MonoBehaviour
     // TODO maybe make optimal
     private bool CheckFullLayer(int y)
     {
-        for (int x = 0; x < gridSizeX; x++) {
-            for (int z = 0; z < gridSizeZ; z++) {
-                if(TheGrid[x,y,z] == null){
+        for (int x = 0; x < ContainerSizeX; x++) {
+            for (int z = 0; z < ContainerSizeZ; z++) {
+                if(Container[x,y,z] == null){
                     return false;
                 }
             }
@@ -99,7 +86,7 @@ public class Playfield : MonoBehaviour
     public void DeleteLayer()
     {
         int layersCleared = 0;
-        for (int y = gridSizeY - 1; y >= 0; y--) {
+        for (int y = ContainerSizeY - 1; y >= 0; y--) {
             //Check full Layer
             if (CheckFullLayer(y)) {
                 layersCleared++;
@@ -116,175 +103,152 @@ public class Playfield : MonoBehaviour
 
     void DeleteLayerAt(int y)
     {
-        for (int x = 0; x < gridSizeX; x++) {
-            for (int z = 0; z < gridSizeZ; z++) {
-                Destroy(TheGrid[x, y, z].gameObject);
+        for (int x = 0; x < ContainerSizeX; x++) {
+            for (int z = 0; z < ContainerSizeZ; z++) {
+                Destroy(Container[x, y, z].gameObject);
                 // ? music add
                 // FindObjectOfType<AudioManager>().Play("ClearLayer");
-                TheGrid[x, y, z] = null;
+                Container[x, y, z] = null;
             }
         }
     }
     void MoveAllLayerDown(int y)
     {
-        for (int i = y; i < gridSizeY; i++) {
+        for (int i = y; i < ContainerSizeY; i++) {
             MoveOneLayerDown(i);
         }
     }
 
     void MoveOneLayerDown(int y)
     {
-        for (int x = 0; x < gridSizeX; x++) {
-            for (int z = 0; z < gridSizeZ; z++) {
-                if (TheGrid[x, y, z] != null) {
-                    TheGrid[x, y - 1, z] = TheGrid[x, y, z];
-                    TheGrid[x, y, z] = null;
-                    TheGrid[x, y - 1, z].position +=  new Vector3(0, -0.1f, 0);
+        for (int x = 0; x < ContainerSizeX; x++) {
+            for (int z = 0; z < ContainerSizeZ; z++) {
+                if (Container[x, y, z] != null) {
+                    Container[x, y - 1, z] = Container[x, y, z];
+                    Container[x, y, z] = null;
+                    Container[x, y - 1, z].position +=  new Vector3(0, -size_cell, 0);
                 }
             }
         }
     }
 
-    public Vector3 Round(Vector3 vec)
+    private float CreateFirstCoordinate(float center, int diff) 
     {
-        return new Vector3((vec.x - first_cell.x) / size_cell - 1,
-                            (vec.y - first_cell.y) / size_cell - 1,
-                             (vec.z - first_cell.z) / size_cell - 1);
+        return (center - diff * size_cell + size_cell/2);
+    }
+    public Vector3Int ChangeCoordinate(Vector3 vec)
+    {
+        first_cell = new Vector3( CreateFirstCoordinate(transform.position.x, (int)ContainerSizeX/2), 
+                                CreateFirstCoordinate(transform.position.y, (int)ContainerSizeY/2),
+                                CreateFirstCoordinate(transform.position.z, (int)ContainerSizeZ/2));
+
+        return new Vector3Int(Mathf.RoundToInt((vec.x - first_cell.x) / size_cell) ,
+                              Mathf.RoundToInt((vec.y - first_cell.y) / size_cell) ,
+                              Mathf.RoundToInt((vec.z - first_cell.z) / size_cell ));
     }
 
-    public Transform GetTransformOnGridPos(Vector3 pos)
+    public Transform GetTransformOnContainerPos(Vector3 pos)
     {
-        //ARManager.instance.txt.text += "old " + pos;
-        pos = Round(pos);
-        //ARManager.instance.txt.text += "new  " + pos;
-        ARManager.instance.txt.text += "Round(pos);" + pos;
-        if (pos.y > gridSizeY - 1) {
+        // ARManager.instance.txt.text += "old " + pos;
+        // // Debug.Log("position_REAL" + pos);
+        Vector3Int new_pos = ChangeCoordinate(pos);
+        // // Debug.Log("position_ROund" + new_pos);
+        // ARManager.instance.txt.text += "new  " + pos;
+        // ARManager.instance.txt.text += "ChangeCoordinate(pos);" + pos;
+        if (pos.y > ContainerSizeY - 1) {
             return null;
         }
         else {
-            return TheGrid[(int)pos.x, (int)pos.y, (int)pos.z];
+            // string tre = "";
+            // foreach (var item in Container)
+            // {
+            //     tre += item.transform.name + "  ";
+            // }
+            // for (int x = 0; x < ContainerSizeX; x++) 
+            // for (int z = 0; z < ContainerSizeZ; z++) 
+            //     for (int y = 0; y < ContainerSizeY; y++) 
+            //         if (Container[x,y,z] != null) 
+            //             tre += Container[x,y,z].transform.name + "(" + x + "," + y + "," + z + " ;;";
+            
+            // // Debug.Log("Container" + tre);
+            return Container[new_pos.x, new_pos.y, new_pos.z];;
         }
     }
-    public bool CheckInsideGrid(Vector3 pos)
+    public bool CheckInsideContainer(Vector3 pos)
     {
-        float dif = (float)gridSizeZ/10 / 2;
+        float dif = (float)ContainerSizeZ/10 / 2;
         float x_start = transform.position.x;
         float y_start = transform.position.y;
         float z_start = transform.position.z;
-        Debug.Log("pos " + pos);
-        // ARManager.instance.txt.text += "pos" + pos + "    ";
-        // for (int x = 0; x < gridSizeX; x++) 
-        //             for (int z = 0; z < gridSizeZ; z++) 
-        //                 for (int y = 0; y < gridSizeY; y++) { 
-        //                     ARManager.instance.txt.text += "the grid" + (TheGrid[x, y, z] ? TheGrid[x, y, z].position : "null") + " " ;
-        //                 }
-        // ARManager.instance.txt.text += "x" + (pos.x <= x_start + dif) + "    " + (pos.x >= x_start - dif);
-        // ARManager.instance.txt.text += "z" + (pos.z <= z_start + dif) + "    " + (pos.z >= z_start - dif);
-        // ARManager.instance.txt.text += "y" + (pos.y >= (y_start - (float)gridSizeY/10 / 2)) + " ";
-            //  "    " + z_start +  " " + ( z_start + dif) +
-            //  "    " + y_start;
 
-        // ARManager.instance.txt.text += "res" + (pos.x <= x_start + dif && pos.x >= x_start - dif &&
-        //         pos.z <= z_start + dif && pos.z >= z_start + dif &&
-        //         pos.y >= (y_start - (float)gridSizeY/10 / 2)) + " ";
         //TODO Abs
         return (pos.x <= x_start + dif && pos.x >= x_start - dif &&
                 pos.z <= z_start + dif && pos.z >= z_start - dif &&
-                pos.y >= (y_start - (float)gridSizeY/10 / 2)); 
+                pos.y >= (y_start - (float)ContainerSizeY/10 / 2)); 
     }
 
-    public void UpdateGrid(Tetromino block)
+    public void UpdateContainer(Tetromino block)
     {
-        for (int x = 0; x < gridSizeX; x++) 
-            for (int z = 0; z < gridSizeZ; z++) 
-                for (int y = 0; y < gridSizeY; y++) 
-                    if (TheGrid[x,y,z] != null) 
-                        if (TheGrid[x, y, z].parent == block.transform) {
-                            TheGrid[x, y, z] = null;
+        for (int x = 0; x < ContainerSizeX; x++) 
+            for (int z = 0; z < ContainerSizeZ; z++) 
+                for (int y = 0; y < ContainerSizeY; y++) 
+                    if (Container[x,y,z] != null) 
+                        if (Container[x, y, z].parent == block.transform) {
+                            Container[x, y, z] = null;
                         }
 
         foreach (Transform child in block.transform) {
-            Vector3 pos = Round(child.position);
-            if (pos.y < gridSizeY) {
-                TheGrid[(int)pos.x, (int)pos.y, (int)pos.z] = child;
+            Vector3Int pos = ChangeCoordinate(child.position);
+            if (pos.y < ContainerSizeY) {
+                Container[pos.x, pos.y, pos.z] = child;
+            }
+        }
+    }
+     public void UpdateContainer(GameObject block)
+    {
+        for (int x = 0; x < ContainerSizeX; x++) 
+            for (int z = 0; z < ContainerSizeZ; z++) 
+                for (int y = 0; y < ContainerSizeY; y++) 
+                    if (Container[x,y,z] != null) 
+                        if (Container[x, y, z].parent == block.transform) {
+                            Container[x, y, z] = null;
+                        }
+
+        foreach (Transform child in block.transform) {
+            Vector3Int pos = ChangeCoordinate(child.position);
+            if (pos.y < ContainerSizeY) {
+                Container[pos.x, pos.y, pos.z] = child;
             }
         }
     }
     void OnDrawGizmos()
     {
-        // Gizmos.color = Color.red;
-        // // TheGrid[0, 0, 0] = transform;
-        // Gizmos.DrawCube(new Vector3(transform.position.x + 0.05f, 
-        //                             transform.position.y + (float)gridSizeY/10 / 2 + 0.05f, 
-        //                             transform.position.z + 0.05f), new Vector3(0.1f, 0.1f, 0.1f));
-        // //GameObject newBlock = Instantiate(blockList[1], spawnPoint, Quaternion.identity) as GameObject;
-        // blockList[1].transform.position += new Vector3(transform.position.x + 0.05f, 
-        //                             transform.position.y + (float)gridSizeY/10 / 2 + 0.05f, 
-        //                             transform.position.z + 0.05f);
-        
-        //RESIZE BOTTOM PLANE
-        //Vector3 scaler = new Vector3((float)gridSizeX/10, 1, (float)gridSizeZ / 10);
-        // bottomPlane.transform.localScale = scaler;
-        //REPOSITION
+       
         bottomPlane.transform.position = new Vector3(transform.position.x,
-                                                        transform.position.y - (float)gridSizeY/10 / 2,
+                                                        transform.position.y - (float)ContainerSizeY/10 / 2,
                                                         transform.position.z);
-        //RETILE MATERIAL
-        //bottomPlane.GetComponent<MeshRenderer>().sharedMaterial.mainTextureScale = new Vector2(gridSizeX, gridSizeZ);
-        if (North != null)
-        {
-            //RESIZE BOTTOM PLANE
-            // North.transform.localScale = scaler;
-
-            //REPOSITION
+        if (North != null) {
             North.transform.position = new Vector3(transform.position.x,
                                                    transform.position.y,
-                                                   transform.position.z - (float)gridSizeZ/10 / 2);
-
-            //RETILE MATERIAL
-            //North.GetComponent<MeshRenderer>().sharedMaterial.mainTextureScale = new Vector2(gridSizeX, gridSizeY);
+                                                   transform.position.z - (float)ContainerSizeZ/10 / 2);
         }
 
-        if (South != null)
-        {
-            //RESIZE BOTTOM PLANE
-            //South.transform.localScale = scaler;
-
-            //REPOSITION
+        if (South != null) {
             South.transform.position = new Vector3(transform.position.x,
                                                    transform.position.y,
-                                                   transform.position.z + (float)gridSizeZ/10 / 2);
-
-            //RETILE MATERIAL
-            //S.GetComponent<MeshRenderer>().sharedMaterial.mainTextureScale = new Vector2(gridSizeX, gridSizeY);
+                                                   transform.position.z + (float)ContainerSizeZ/10 / 2);
         }
 
-        if (East != null)
-        {
-            //RESIZE BOTTOM PLANE
-            
-            // East.transform.localScale = scaler;
-
-            //REPOSITION
-            East.transform.position = new Vector3(transform.position.x + (float)gridSizeX/10 / 2,
+        if (East != null) {
+            East.transform.position = new Vector3(transform.position.x + (float)ContainerSizeX/10 / 2,
                                                     transform.position.y,
                                                     transform.position.z );
-
-            //RETILE MATERIAL
-            //East.GetComponent<MeshRenderer>().sharedMaterial.mainTextureScale = new Vector2(gridSizeZ, gridSizeY);
         }
 
-        if (West != null)
-        {
-            //RESIZE BOTTOM PLANE
-            // West.transform.localScale = scaler;
-
-            //REPOSITION
-            West.transform.position = new Vector3(transform.position.x - (float)gridSizeX/10 / 2,
+        if (West != null) {
+            West.transform.position = new Vector3(transform.position.x - (float)ContainerSizeX/10 / 2,
                                                     transform.position.y,
                                                     transform.position.z );
-            //RETILE MATERIAL
-            //West.GetComponent<MeshRenderer>().sharedMaterial.mainTextureScale = new Vector2(gridSizeZ, gridSizeY);
         }
 
     }
