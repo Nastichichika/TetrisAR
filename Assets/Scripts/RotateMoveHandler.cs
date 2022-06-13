@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class RotateMoveHandler : MonoBehaviour
 {
     public static RotateMoveHandler instance;
+    private Vector2 tapPositionFirst;
     private Vector2 tapPosition;
     private Vector2 swipeDelta;
     private bool isSwipingMove;
@@ -13,8 +14,6 @@ public class RotateMoveHandler : MonoBehaviour
 
     GameObject activeBlock;
     public Tetromino activeTetris;
-
-    [SerializeField] private Camera ARCamera;
 
     private Vector3 Down = new Vector3(0, -0.1f, 0);
     private Vector3 Up = new Vector3(0, 0.1f, 0);
@@ -26,7 +25,7 @@ public class RotateMoveHandler : MonoBehaviour
     private int side = -1;
     public float compass;
 
-    private int stateZone = 8;
+    private int stateZone = 10;
     private Dictionary<int, Vector3[]> moves = new Dictionary<int, Vector3[]>();
     private void InitializeMove() {
         moves.Add(0, new[] {Right, Left, Forward, Back});
@@ -34,9 +33,6 @@ public class RotateMoveHandler : MonoBehaviour
         moves.Add(2, new[] {Left, Right, Back, Forward});
         moves.Add(3, new[] {Back, Forward, Left, Right});
     }
-
-    private float touchDuration = 0;
-    private Touch touch;
        
     private void Awake()
     {
@@ -48,76 +44,55 @@ public class RotateMoveHandler : MonoBehaviour
     }
     void Update()
     {
-        if (activeBlock == null || !ARManager.instance.gameStart)
+
+        if (activeBlock == null || !ARManager.instance.gameStart || PauseMenu.isPauseCustom)
             return;
-        
-        // if (Input.touchCount > 0 && Input.GetTouch(0).tapCount == 1) {
-        //     HandleSide();
-        //     activeTetris.setInput(moves[side][2]);
-        // }
-
-        // else if (Input.touchCount > 0 && Input.GetTouch(0).tapCount == 2) {
-        //     HandleSide();
-        //     activeTetris.setInput(moves[side][3]);
-        // }
-        // if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended)
-        //  {
-        //      // Debug.Log('tap count' + );
-        //      tapCount += 1;
-        //      StartCoroutine(Countdown()); 
-        //      HandleSide();
-        //      activeTetris.setInput(moves[side][2]);   
-        //  }
-       
-        //  if (tapCount == 2)
-        //  { 
-        //      tapCount = 0;
-        //      StopCoroutine(Countdown());
-        //      HandleSide();   
-        //      activeTetris.setInput(moves[side][3]);
-        //  }
-
-        float touchDuration = 0;
-        Touch touch;
         
         if(Input.touchCount > 0){ //if there is any touch
             HandleSide();
-            touchDuration += Time.deltaTime;
-            touch = Input.GetTouch(0);
-
-            if (Input.touchCount == 2) {
-                // Debug.Log("2 swipe = " + Input.GetTouch(0).phase);
-                // // Debug.Log(Input.GetTouch(0).phase);
-                if (Input.GetTouch(0).phase == TouchPhase.Began) {
-                    tapPosition = Input.GetTouch(0).position;
+            Touch touch = Input.GetTouch(0);
+            Debug.Log("Input.touchCount " + Input.touchCount);
+            Debug.Log("touch " + touch.position);
+            Debug.Log("touch.phase " + touch.phase);
+            if ((Input.touchCount == 2 || isSwipingRotate || (isSwipingMove && Input.touchCount == 2 && (touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved)))) {
+                switch (touch.phase)
+                {   
+                    case TouchPhase.Began:
+                    // Record initial touch position.
+                    tapPositionFirst = touch.position;
+                    tapPosition = touch.position;
                     isSwipingRotate = true;
+                    break;
+
+                    case TouchPhase.Ended:
+                        tapPosition = touch.position;
+                        CheckSwipeRotate();
+                        Debug.Log("touch Rotete ENded " + touch.position);
+                        ResetSwipe();
+                        break;  
                 }
-                else if (Input.GetTouch(0).phase == TouchPhase.Canceled ||
-                        Input.GetTouch(0).phase == TouchPhase.Ended) {
-                    ResetSwipe();
-                }
-                CheckSwipeRotate();
+                
             }
-            else if (Input.touchCount == 1) {
-                // Debug.Log("1 swipe = " + Input.GetTouch(0).phase);
-                // // Debug.Log(Input.GetTouch(0).phase);
-                if (Input.GetTouch(0).phase == TouchPhase.Began) {
-                    tapPosition = Input.GetTouch(0).position;
-                    isSwipingMove = true;
+            else if (Input.touchCount == 1 || isSwipingMove) {
+                switch (touch.phase)
+                {   
+                    case TouchPhase.Began:
+                    // Record initial touch position.
+                        tapPositionFirst = touch.position;
+                        tapPosition = touch.position;
+                        isSwipingMove = true;
+                        break;
+
+                    case TouchPhase.Ended:
+                        tapPosition = touch.position;
+                        CheckSwipeMove();
+                        Debug.Log("touch Move ENded " + touch.position);
+                        ResetSwipe();
+                        break;  
                 }
-                else if (Input.GetTouch(0).phase == TouchPhase.Canceled ||
-                        Input.GetTouch(0).phase == TouchPhase.Ended) {
-                    ResetSwipe();
-                    if(touchDuration < 0.2f) {
-                        // Debug.Log("tap = " + Input.GetTouch(0).phase + " time = " +  touchDuration);
-                        StartCoroutine("singleOrDouble", touch);
-                    }
-                }
-                CheckSwipeMove();
+                
             }   
         }
-        else
-            touchDuration = 0.0f;
         
     }
     public void SetActiveBlock(GameObject block, Tetromino tetris)
@@ -127,18 +102,35 @@ public class RotateMoveHandler : MonoBehaviour
     }
     private void CheckSwipeMove() {
         if (isSwipingMove) {
-            swipeDelta = Input.GetTouch(0).position - tapPosition;
+            Debug.Log("tapPositionFirst " + tapPositionFirst + " tapPosition " + tapPosition);
+            swipeDelta = tapPosition - tapPositionFirst;
+            Debug.Log("swipeDelta " + swipeDelta);
         }
-        // Debug.Log("swipeDelta.magnitude = " + swipeDelta.magnitude);
-        if (swipeDelta.magnitude > 5) {
+        else return;
+        
+        Debug.Log("tapPositionFirst " + tapPositionFirst + " tapPosition " + tapPosition);
+        Debug.Log("isSwipingMove = " + isSwipingMove);
+        Debug.Log("Move swipeDelta.magnitude " + swipeDelta);
+        if (Mathf.Abs(swipeDelta.magnitude) > 100) {
             if (Mathf.Abs(swipeDelta.x) > Mathf.Abs(swipeDelta.y)) {
+                if( swipeDelta.x > 0) {
+                    Debug.Log("Move by X > 0   " + swipeDelta.magnitude);
+                }
+                else {
+                    Debug.Log("Move by X << 0   " + swipeDelta.magnitude);
+                }
+                Debug.Log("Move by X " + swipeDelta.magnitude);
                 activeTetris.setInput((swipeDelta.x > 0 ? moves[side][0] : moves[side][1]));
             }
             else if (swipeDelta.y < 0){
+                Debug.Log("Speed up " + swipeDelta.magnitude);
                 SetHighSpeed();
             }
-            ResetSwipe();
+            
+        } else if(swipeDelta.magnitude == 0) {
+             activeTetris.setInput(moves[side][3]); 
         }
+        // ResetSwipe();
     }
 
     private void HandleSide() {
@@ -160,26 +152,56 @@ public class RotateMoveHandler : MonoBehaviour
             side = 2;
             // Debug.Log("side " + side + " compass " + compass + " degree " + degree);
         }
-        if (oldSide != side && (compass - degree) % 360 <= 9 && oldSide > 0) {
+        if (oldSide != side && (compass - degree) % 360 <= stateZone && oldSide > 0) {
             side = oldSide;
         }
     }
     private void CheckSwipeRotate() {
-        // Debug.Log("rotate");
+        Debug.Log("rotate");
         if (isSwipingRotate) {
-            swipeDelta = Input.GetTouch(0).position - tapPosition;
+            Debug.Log("tapPositionFirst " + tapPositionFirst + " tapPosition " + tapPosition);
+            swipeDelta = tapPosition - tapPositionFirst;
+            Debug.Log("swipeDelta " + swipeDelta);
         }
-        if (swipeDelta.magnitude > 3) {
+        else return;
+        Debug.Log("tapPositionFirst " + tapPositionFirst + " tapPosition " + tapPosition);
+        Debug.Log("isSwipingRotate = " + isSwipingRotate);
+        Debug.Log("ROTATE swipeDelta.magnitude " + swipeDelta);
+        if (Mathf.Abs(swipeDelta.magnitude) > 100) {
+            
             if (Mathf.Abs(swipeDelta.x) > Mathf.Abs(swipeDelta.y)) {
+                if( swipeDelta.y > 0) {
+                    Debug.Log("Rotate by Y > 0   " + swipeDelta.magnitude);
+                }
+                else {
+                    Debug.Log("Rotate by Y << 0   " + swipeDelta.magnitude);
+                }
                 activeTetris.setRotationInput((swipeDelta.y > 0 ? new Vector3(0, 90, 0) : new Vector3(0, -90, 0)));
                 //ARManager.instance.txt.text = "2delrax" + swipeDelta;
             }
             else {
-                activeTetris.setRotationInput((swipeDelta.x > 0 ? new Vector3(0, 0, 90) : new Vector3(0, 0, -90)));
-                //ARManager.instance.txt.text = "2delray" + swipeDelta;
+                Debug.Log("ROTATE swipeDelta.x " + swipeDelta.x);
+                if (Mathf.Abs(swipeDelta.x) < 100) {
+                    activeTetris.setRotationInput((swipeDelta.x > 0 ? new Vector3(90, 0, 0) : new Vector3(-90, 0, 0)));
+                    if( swipeDelta.x > 0) {
+                        Debug.Log("Rotate by X > 0   " + swipeDelta.magnitude);
+                    }
+                    else {
+                        Debug.Log("Rotate by X << 0   " + swipeDelta.magnitude);
+                    }
+                }
+                else {
+                    if( swipeDelta.y > 0) {
+                    Debug.Log("Rotate by Z > 0   " + swipeDelta.magnitude);
+                    }
+                    else {
+                        Debug.Log("Rotate by Z << 0   " + swipeDelta.magnitude);
+                    }
+                    activeTetris.setRotationInput((swipeDelta.x > 0 ? new Vector3(0, 0, 90) : new Vector3(0, 0, -90)));
+                } 
             }
-            
-            ResetSwipe();
+        } else if(swipeDelta.magnitude == 0){
+             activeTetris.setInput(moves[side][2]);
         }
     }
     private void ResetSwipe() {
@@ -187,20 +209,6 @@ public class RotateMoveHandler : MonoBehaviour
         swipeDelta = Vector2.zero;
         tapPosition = Vector2.zero;
         isSwipingRotate = false;
-    }
-
-    IEnumerator singleOrDouble(Touch touch){
-        yield return new WaitForSeconds(0.3f);
-        if(touch.tapCount == 1) {
-            activeTetris.setInput(moves[side][2]);   
-            // Debug.Log ("Single");
-        }
-        else if(touch.tapCount == 2){
-            //this coroutine has been called twice. We should stop the next one here otherwise we get two double tap
-            StopCoroutine("singleOrDouble");
-            // Debug.Log ("Double");
-            activeTetris.setInput(moves[side][3]);
-        }
     }
 
     public void SetHighSpeed()

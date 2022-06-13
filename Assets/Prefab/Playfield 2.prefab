@@ -49,23 +49,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b56094d45adb54067afe0f45fb55cba8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSizeX: 6
-  gridSizeY: 10
-  gridSizeZ: 6
+  ContainerSizeX: 6
+  ContainerSizeY: 10
+  ContainerSizeZ: 6
   blockList:
   - {fileID: 5576715131302046447, guid: cd906ac7f5f844e4d912d8082f5f44db, type: 3}
   - {fileID: 2776714460527569613, guid: fd432b023cd2a4a929b22bb704b9ae4d, type: 3}
   - {fileID: 5389862392344405047, guid: 57552a5238c9e457fb79a98dbf40d453, type: 3}
   - {fileID: 7395847085872436187, guid: 0d422bea729984eadac8038cc918949d, type: 3}
+  - {fileID: 4311862113269931621, guid: 905277419960f4bc69134149b796ae83, type: 3}
+  - {fileID: 5762314989586147495, guid: 32e47b9ee0f824e099cd59ef3bf5a3b3, type: 3}
+  ghostList:
+  - {fileID: 5576715131302046447, guid: 404b178d229d2491493b9881e6ac83b6, type: 3}
+  - {fileID: 2776714460527569613, guid: 948b293c3008343a19e97ccb51324028, type: 3}
+  - {fileID: 5389862392344405047, guid: c725bc1d091ff4cc88ef590059c8954c, type: 3}
+  - {fileID: 7395847085872436187, guid: 1e7bb19ca15534200b5e3ed702f805f1, type: 3}
   - {fileID: 4311862113269931621, guid: 3e4305b9efaf5984182d172de4c82726, type: 3}
   - {fileID: 5762314989586147495, guid: 2a7e77a9ad2d74d4bbd32f3912756c62, type: 3}
-  ghostList: []
-  spawnPoint: {x: 0, y: 0, z: 0}
   bottomPlane: {fileID: 2577321458645062490}
   North: {fileID: 2577321460012518547}
   South: {fileID: 2577321458654222413}
   West: {fileID: 2577321459267257438}
   East: {fileID: 2577321459719428192}
+  size_cell: 0.1
 --- !u!1 &2577321458645062490
 GameObject:
   m_ObjectHideFlags: 0

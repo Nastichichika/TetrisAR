@@ -15,7 +15,6 @@ public class Tetromino : MonoBehaviour
         fallTime = GameManager.instance.ReadFallSpeed();
         if (!CheckValidMove()) {
             Debug.Log("SetGameIsOver");
-        //    ARManager.instance.txt.text = "game over";
             GameManager.instance.SetGameIsOver();
         }
     }

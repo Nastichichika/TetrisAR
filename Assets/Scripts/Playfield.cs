@@ -51,20 +51,15 @@ public class Playfield : MonoBehaviour
 
     public void SpawnNewBlock()
     {
-        // Vector3 spawnPoint = new Vector3(transform.position.x + size_cell/2 + swawnHelper[randomTetrominoes].x, 
-        //                                 transform.position.y + (float)ContainerSizeY/10 / 2 + size_cell/2 + swawnHelper[randomTetrominoes].y, 
-        //                                 transform.position.z + size_cell/2 + swawnHelper[randomTetrominoes].z);
         Vector3 spawnPoint = new Vector3(transform.position.x + size_cell/2 , 
                                         transform.position.y + (float)ContainerSizeY/10/2 - size_cell/2, 
                                         transform.position.z + size_cell/2);
-        // ARManager.instance.txt.text += "SpawnNewBlock";
-        // // Debug.Log(spawnPoint);
         Debug.Log("start new block");
         GameObject newBlock = Instantiate(blockList[randomTetrominoes], spawnPoint, Quaternion.identity) as GameObject;
         // TODO create class Ghost and set the ghost
         GameObject newGhost = Instantiate(ghostList[randomTetrominoes], spawnPoint, Quaternion.identity) as GameObject;
         Debug.Log("randomTetrominoes " + randomTetrominoes);
-        // // Debug.Log("newBlock" + newBlock.name);
+        
         newGhost.GetComponent<Ghost>().setParent(newBlock);
 
         NextTetromino();
